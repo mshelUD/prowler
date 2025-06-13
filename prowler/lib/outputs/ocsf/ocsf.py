@@ -4,8 +4,8 @@ from typing import List
 
 from py_ocsf_models.events.base_event import SeverityID, StatusID
 from py_ocsf_models.events.findings.detection_finding import DetectionFinding
-from py_ocsf_models.events.findings.detection_finding import (
-    TypeID as DetectionFindingTypeID,
+from py_ocsf_models.events.findings.detection_finding_type_id import (
+    DetectionFindingTypeID,
 )
 from py_ocsf_models.events.findings.finding import ActivityID, FindingInformation
 from py_ocsf_models.objects.account import Account, TypeID
