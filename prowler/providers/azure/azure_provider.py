@@ -944,7 +944,12 @@ class AzureProvider(Provider):
                             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
                         )
 
-            asyncio.get_event_loop().run_until_complete(get_azure_identity())
+            try:
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+            loop.run_until_complete(get_azure_identity())
 
         # Managed identities only can be assigned resource, resource group and subscription scope permissions
         elif managed_identity_auth:

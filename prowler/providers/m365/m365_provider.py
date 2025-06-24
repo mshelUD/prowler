@@ -966,7 +966,13 @@ class M365Provider(Provider):
             organization_info = await client.organization.get()
             identity.tenant_id = organization_info.value[0].id
 
-        asyncio.get_event_loop().run_until_complete(get_m365_identity(identity))
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+        loop.run_until_complete(get_m365_identity(identity))
+
         return identity
 
     @staticmethod
