@@ -28,6 +28,7 @@ from prowler.providers.m365.exceptions.exceptions import (
     M365ArgumentTypeValidationError,
     M365BrowserAuthNoFlagError,
     M365BrowserAuthNoTenantIDError,
+    M365TokenAuthNoAccessTokenError,
     M365ClientAuthenticationError,
     M365ClientIdAndClientSecretNotBelongingToTenantIdError,
     M365ConfigCredentialsError,
@@ -52,6 +53,7 @@ from prowler.providers.m365.exceptions.exceptions import (
     M365TenantIdAndClientSecretNotBelongingToClientIdError,
     M365UserCredentialsError,
 )
+from prowler.providers.m365.lib.access_token_credential import AccessTokenCredential
 from prowler.providers.m365.lib.mutelist.mutelist import M365Mutelist
 from prowler.providers.m365.lib.powershell.m365_powershell import (
     M365PowerShell,
@@ -113,7 +115,9 @@ class M365Provider(Provider):
         env_auth: bool = False,
         az_cli_auth: bool = False,
         browser_auth: bool = False,
+        token_auth: bool = False,
         tenant_id: str = None,
+        access_token: str = None,
         client_id: str = None,
         client_secret: str = None,
         user: str = None,
@@ -160,11 +164,13 @@ class M365Provider(Provider):
             sp_env_auth,
             env_auth,
             browser_auth,
+            token_auth,
             tenant_id,
             client_id,
             client_secret,
             user,
             password,
+            access_token
         )
 
         logger.info("Checking if region is different than default one")
@@ -187,7 +193,9 @@ class M365Provider(Provider):
             sp_env_auth,
             env_auth,
             browser_auth,
+            token_auth,
             tenant_id,
+            access_token,
             m365_credentials,
             self._region_config,
         )
@@ -278,11 +286,13 @@ class M365Provider(Provider):
         sp_env_auth: bool,
         env_auth: bool,
         browser_auth: bool,
+        token_auth: bool,
         tenant_id: str,
         client_id: str,
         client_secret: str,
         user: str,
         password: str,
+        access_token: str
     ):
         """
         Validates the authentication arguments for the M365 provider.
@@ -292,14 +302,17 @@ class M365Provider(Provider):
             sp_env_auth (bool): Flag indicating whether application authentication with environment variables is enabled.
             env_auth: (bool): Flag indicating whether to use application and PowerShell authentication with environment variables.
             browser_auth (bool): Flag indicating whether browser authentication is enabled.
+            token_auth (bool): Flag indicating whether application authentication with access token is enabled.
             tenant_id (str): The M365 Tenant ID.
             client_id (str): The M365 Client ID.
             client_secret (str): The M365 Client Secret.
             user (str): The M365 User Account.
             password (str): The M365 User Password.
+            access_token (str): The M365 Access Token.
 
         Raises:
             M365BrowserAuthNoTenantIDError: If browser authentication is enabled but the tenant ID is not found.
+            M365TokenAuthNoAccessTokenError: If token authentication is enabled but the Access Token is not found.
         """
 
         if not client_id and not client_secret:
@@ -313,15 +326,21 @@ class M365Provider(Provider):
                 and not sp_env_auth
                 and not browser_auth
                 and not env_auth
+                and not token_auth
             ):
                 raise M365NoAuthenticationMethodError(
                     file=os.path.basename(__file__),
-                    message="M365 provider requires at least one authentication method set: [--env-auth | --az-cli-auth | --sp-env-auth | --browser-auth]",
+                    message="M365 provider requires at least one authentication method set: [--env-auth | --az-cli-auth | --sp-env-auth | --browser-auth | --token-auth]",
                 )
             elif browser_auth and not tenant_id:
                 raise M365BrowserAuthNoTenantIDError(
                     file=os.path.basename(__file__),
                     message="M365 Tenant ID (--tenant-id) is required for browser authentication mode",
+                )
+            elif token_auth and not access_token:
+                raise M365TokenAuthNoAccessTokenError(
+                    file=os.path.basename(__file__),
+                    message="M365 Access Token (--access-token) is required for token-auth authentication mode",
                 )
         elif env_auth:
             if not user or not password or not tenant_id:
@@ -476,7 +495,9 @@ class M365Provider(Provider):
         sp_env_auth: bool,
         env_auth: bool,
         browser_auth: bool,
+        token_auth: bool,
         tenant_id: str,
+        access_token: str,
         m365_credentials: dict,
         region_config: M365RegionConfig,
     ):
@@ -488,7 +509,9 @@ class M365Provider(Provider):
             az_cli_auth (bool): Flag indicating whether to use Azure CLI authentication.
             sp_env_auth (bool): Flag indicating whether to use application authentication with environment variables.
             browser_auth (bool): Flag indicating whether to use interactive browser authentication.
+            token_auth (bool): Flag indicating whether to use Access Token authentication.
             tenant_id (str): The M365 Active Directory tenant ID.
+            access_token (str): The M365 Access Token.
             m365_credentials (dict): The M365 configuration object. It contains the following keys:
                 - tenant_id: The M365 Active Directory tenant ID.
                 - client_id: The M365 client ID.
@@ -514,6 +537,11 @@ class M365Provider(Provider):
                         f"{environment_credentials_error.__class__.__name__}[{environment_credentials_error.__traceback__.tb_lineno}] -- {environment_credentials_error}"
                     )
                     raise environment_credentials_error
+
+            if token_auth:
+                credentials = AccessTokenCredential(access_token=access_token)
+                return credentials
+
             try:
                 if m365_credentials:
                     try:
@@ -615,7 +643,9 @@ class M365Provider(Provider):
         sp_env_auth: bool = False,
         env_auth: bool = False,
         browser_auth: bool = False,
+        token_auth: bool = False,
         tenant_id: str = None,
+        access_token: str = None,
         region: str = "M365Global",
         raise_on_exception: bool = True,
         client_id: str = None,
@@ -670,11 +700,13 @@ class M365Provider(Provider):
                 sp_env_auth,
                 env_auth,
                 browser_auth,
+                token_auth,
                 tenant_id,
                 client_id,
                 client_secret,
                 user,
                 password,
+                access_token
             )
             region_config = M365Provider.setup_region_config(region)
 
@@ -704,7 +736,9 @@ class M365Provider(Provider):
                 sp_env_auth,
                 env_auth,
                 browser_auth,
+                token_auth,
                 tenant_id,
+                access_token,
                 m365_credentials,
                 region_config,
             )
