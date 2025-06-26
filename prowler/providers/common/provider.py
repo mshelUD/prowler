@@ -221,7 +221,9 @@ class Provider(ABC):
                         env_auth=arguments.env_auth,
                         az_cli_auth=arguments.az_cli_auth,
                         browser_auth=arguments.browser_auth,
+                        token_auth=arguments.token_auth,
                         tenant_id=arguments.tenant_id,
+                        access_token=arguments.access_token,
                         init_modules=arguments.init_modules,
                         fixer_config=fixer_config,
                     )

@@ -114,6 +114,10 @@ class M365BaseException(ProwlerException):
             "message": "The provided User does not belong to the specified tenant.",
             "remediation": "Check the User email domain and ensure it belongs to the specified tenant.",
         },
+        (6027, "M365TokenAuthNoAccessTokenError"): {
+            "message": "Error with AccessTokenCredential",
+            "remediation": "Ensure AccessTokenCredential is correctly configured.",
+        },
     }
 
     def __init__(self, code, file=None, original_exception=None, message=None):
@@ -323,4 +327,11 @@ class M365UserNotBelongingToTenantError(M365CredentialsError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             6026, file=file, original_exception=original_exception, message=message
+        )
+
+
+class M365TokenAuthNoAccessTokenError(M365CredentialsError):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            6027, file=file, original_exception=original_exception, message=message
         )

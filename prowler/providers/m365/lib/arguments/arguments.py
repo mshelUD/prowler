@@ -28,6 +28,17 @@ def init_parser(self):
         action="store_true",
         help="Use Azure interactive browser authentication to log in against Microsoft 365",
     )
+    m365_auth_modes_group.add_argument(
+        "--token-auth",
+        action="store_true",
+        help="Use Access Token authentication to log in against Microsoft 365",
+    )
+    m365_parser.add_argument(
+        "--access-token",
+        nargs="?",
+        default=None,
+        help="Microsoft 365 Access Token to be used with --token-auth option",
+    )
     m365_parser.add_argument(
         "--tenant-id",
         nargs="?",
