@@ -119,6 +119,33 @@ def init_parser(self):
         default=None,
         help="Same as -B but do not use the assumed role credentials to put objects to the bucket, instead uses the initial credentials.",
     )
+    # AWS Credentials
+    aws_cred_subparser = aws_parser.add_argument_group("AWS Credentials")
+    aws_cred_subparser.add_argument(
+        "--aws-access-key-id",
+        default=None,
+        help=(
+            "AWS access key ID. Use this if you want to authenticate directly "
+            "with temporary credentials instead of using a profile or environment variables."
+        )
+    )
+    aws_cred_subparser.add_argument(
+        "--aws-secret-access-key",
+        default=None,
+        help=(
+            "AWS secret access key. Use this if you want to authenticate directly "
+            "with temporary credentials instead of using a profile or environment variables. "
+            "Must be used together with the access key ID"
+        ),
+    )
+    aws_cred_subparser.add_argument(
+        "--aws-session-token",
+        default=None,
+        help=(
+            "AWS session token. Use this if you want to authenticate directly "
+            "with temporary credentials instead of using a profile or environment variables."
+        ),
+    )
 
     # Based Scans
     aws_based_scans_subparser = aws_parser.add_argument_group("AWS Based Scans")
