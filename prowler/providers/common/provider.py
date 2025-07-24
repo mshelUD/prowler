@@ -176,6 +176,9 @@ class Provider(ABC):
                         config_path=arguments.config_file,
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
+                        aws_access_key_id=arguments.aws_access_key_id,
+                        aws_secret_access_key=arguments.aws_secret_access_key,
+                        aws_session_token=arguments.aws_session_token,
                     )
                 elif "azure" in provider_class_name.lower():
                     provider_class(
