@@ -329,3 +329,227 @@ For installation instructions, usage details, tutorials, and the Developer Guide
 Prowler is licensed under the Apache License 2.0, as indicated in each file within the repository. Obtaining a Copy of the License
 
 A copy of the License is available at <http://www.apache.org/licenses/LICENSE-2.0>
+
+# CSV to JSON Compliance Data Mapper
+
+This project provides Python scripts to map compliance control data from CSV format to JSON structure, specifically designed for mapping MAXI Compliance Controls to Prowler compliance frameworks.
+
+## Overview
+
+The mapper processes CSV data containing auto-check titles and control IDs, then merges this information with existing JSON compliance files to create a comprehensive mapping with descriptions and remediation procedures.
+
+**Important**: Each auto-check is merged only with its corresponding source-specific JSON file. For example:
+- `1.1 Maintain current contact details (AWS)` → merges only with AWS JSON file
+- `1.1.1 Ensure Administrative accounts are cloud-only (M365)` → merges only with M365 JSON file
+- `1.1.1 Ensure Security Defaults is enabled on Microsoft Entra ID (Azure)` → merges only with Azure JSON file
+
+## Files
+
+- `csv_to_json_mapper.py` - Basic mapper for single JSON file
+- `advanced_csv_to_json_mapper.py` - Advanced mapper supporting multiple sources
+- `test_mapper.py` - Test script to demonstrate functionality
+- `source_mapping_demo.py` - Demonstration of source-specific mapping
+- `README.md` - This documentation file
+
+## Input Format
+
+### CSV Structure
+The CSV file should contain the following columns:
+- `Task Type` - Should be "Auto-check" for relevant rows
+- `Auto-Check Title` - Format: "1.1 Title (Source)"
+- `Auto-Check<>Control IDs` - Format: "A.5.24 (ISO 27001)\nCC7.4 (SOC 2)"
+
+### Example CSV Row
+```csv
+Task Type,Auto-Check Title,Auto-Check<>Control IDs,CIS Benchmarks
+Auto-check,1.1 Maintain current contact details (AWS),"A.5.24 (ISO 27001)
+CC7.4 (SOC 2)","cis_4.0_m365
+cis_3.0_azure
+cis_5.0_aws
+cis_1.2_gws"
+```
+
+## Output Format
+
+The mapper produces JSON objects with the following structure:
+
+```json
+{
+  "index": "1.1",
+  "title": "Maintain current contact details",
+  "source": "AWS",
+  "controls": {
+    "ISO27001": "A.5.24",
+    "SOC2": "CC7.4"
+  },
+  "description": "Combined description and rationale from JSON requirement",
+  "remediation": "Remediation procedure from JSON requirement"
+}
+```
+
+## Source-Specific Mapping
+
+The mapper ensures that each auto-check is only merged with its corresponding source JSON file:
+
+| Source | JSON File | Description |
+|--------|-----------|-------------|
+| AWS | `prowler/compliance/aws/cis_5.0_aws.json` | AWS-specific requirements and remediation |
+| Azure | `prowler/compliance/azure/cis_3.0_azure.json` | Azure-specific requirements and remediation |
+| M365 | `prowler/compliance/m365/cis_4.0_m365.json` | Microsoft 365-specific requirements and remediation |
+| GWS | `prowler/compliance/gcp/cis_1.2_gws.json` | Google Workspace-specific requirements and remediation |
+
+This ensures that:
+- AWS auto-checks get AWS-specific descriptions and remediation procedures
+- Azure auto-checks get Azure-specific descriptions and remediation procedures
+- M365 auto-checks get Microsoft 365-specific descriptions and remediation procedures
+- GWS auto-checks get Google Workspace-specific descriptions and remediation procedures
+
+## Usage
+
+### Basic Usage
+
+```python
+from csv_to_json_mapper import map_csv_to_json
+
+# Map CSV to single JSON file
+map_csv_to_json(
+    csv_file_path="MAXI Compliance Controls_Frameworks Mapping - Auto-Checks Tasks.csv",
+    json_file_path="prowler/compliance/aws/cis_5.0_aws.json",
+    output_file_path="mapped_compliance_data.json"
+)
+```
+
+### Advanced Usage
+
+```python
+from advanced_csv_to_json_mapper import map_csv_to_json_advanced
+
+# Map CSV to multiple JSON files based on source
+mapped_data, stats = map_csv_to_json_advanced(
+    csv_file_path="MAXI Compliance Controls_Frameworks Mapping - Auto-Checks Tasks.csv",
+    output_file_path="mapped_compliance_data.json"
+)
+```
+
+### Running the Scripts
+
+1. **Basic Mapper:**
+   ```bash
+   python csv_to_json_mapper.py
+   ```
+
+2. **Advanced Mapper:**
+   ```bash
+   python advanced_csv_to_json_mapper.py
+   ```
+
+3. **Test Script:**
+   ```bash
+   python test_mapper.py
+   ```
+
+4. **Source Mapping Demo:**
+   ```bash
+   python source_mapping_demo.py
+   ```
+
+## Supported Sources
+
+The advanced mapper supports the following sources and their corresponding JSON files:
+
+- **AWS**: `prowler/compliance/aws/cis_5.0_aws.json`
+- **Azure**: `prowler/compliance/azure/cis_3.0_azure.json`
+- **M365**: `prowler/compliance/m365/cis_4.0_m365.json`
+- **GWS**: `prowler/compliance/gcp/cis_1.2_gws.json`
+
+## Functions
+
+### Core Functions
+
+#### `parse_auto_check_title(title: str) -> Dict[str, str]`
+Parses auto-check titles to extract index, title, and source.
+
+**Input:** `"1.1 Maintain current contact details (AWS)"`
+**Output:**
+```json
+{
+  "index": "1.1",
+  "title": "Maintain current contact details",
+  "source": "AWS"
+}
+```
+
+#### `parse_control_ids(control_ids: str) -> Dict[str, str]`
+Parses control IDs to extract ISO27001 and SOC2 controls.
+
+**Input:** `"A.5.24 (ISO 27001)\nCC7.4 (SOC 2)"`
+**Output:**
+```json
+{
+  "ISO27001": "A.5.24",
+  "SOC2": "CC7.4"
+}
+```
+
+#### `find_requirement_by_id(json_data: Dict, index: str) -> Optional[Dict]`
+Finds a requirement in JSON data by its ID.
+
+#### `extract_requirement_data(requirement: Dict) -> Dict[str, str]`
+Extracts description and remediation from requirement data.
+
+### Advanced Functions
+
+#### `map_csv_to_json_advanced(csv_file_path: str, output_file_path: str)`
+Advanced mapping function that handles multiple JSON files based on source.
+
+#### `create_source_specific_files(mapped_data: List[Dict], output_dir: str)`
+Creates separate JSON files for each source.
+
+## Error Handling
+
+The scripts include comprehensive error handling for:
+- Missing CSV files
+- Missing JSON files
+- Malformed data
+- Missing requirements in JSON files
+
+## Statistics
+
+The advanced mapper provides detailed statistics:
+- Total rows processed
+- Auto-check rows found
+- Successful mappings
+- Missing JSON files
+- Missing requirements
+
+## Example Output
+
+```json
+[
+  {
+    "index": "1.1",
+    "title": "Maintain current contact details",
+    "source": "AWS",
+    "controls": {
+      "ISO27001": "A.5.24",
+      "SOC2": "CC7.4"
+    },
+    "description": "Ensure contact email and telephone details for AWS accounts are current and map to more than one individual in your organization...",
+    "remediation": "This activity can only be performed via the AWS Console, with a user who has permission to read and write Billing information..."
+  }
+]
+```
+
+## Requirements
+
+- Python 3.6+
+- Standard library modules: `csv`, `json`, `re`, `os`, `typing`
+
+## Notes
+
+- The mapper automatically handles multi-line control IDs
+- It supports various index formats (1.1, 1.1.1, etc.)
+- Missing JSON files or requirements are logged as warnings
+- The advanced mapper creates separate output files for each source
+- All output files are saved with UTF-8 encoding
+- **Each source is only merged with its corresponding JSON file for accurate source-specific data**
